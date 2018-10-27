@@ -12,16 +12,16 @@ AddEventHandler('esx_godirtyjob:pay', function(amount)
         if money > amount or money == amount then
             xPlayer.addMoney(tonumber(amount)) -- Add Clean Money
             xPlayer.removeAccountMoney('black_money', amount) -- Removes Dirty Money
-            TriggerClientEvent('esx:showNotification', _source, "You have ~g~cleaned: $" ..amount)
+            TriggerClientEvent('esx:showNotification', _source, _U('cleaned_money', amount))
         else
-            TriggerClientEvent('esx:showNotification', _source, "U don't have dirty money...")
+            TriggerClientEvent('esx:showNotification', _source, _U('not_enough_dirty_money'))
         end
 
         if money < amount then
             local money = xPlayer.getAccount('black_money').money
             xPlayer.addMoney(tonumber(money)) -- Add Clean Money
             xPlayer.removeAccountMoney('black_money', money) -- Removes Dirty Money
-            TriggerClientEvent('esx:showNotification', _source, "You have ~g~cleaned all your money: $" ..money)
+            TriggerClientEvent('esx:showNotification', _source, _U('cleaned_all_money', money))
             retourcamion_oui()
             isJobTrucker = false
         end

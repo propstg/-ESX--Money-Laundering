@@ -425,7 +425,7 @@ function donnerlapaye()
         if livraisonTotalPaye == 0 then
             ESX.ShowNotification(_U('not_delivery'))
             ESX.ShowNotification(_U('pay_repair'))
-            ESX.ShowNotification(_U('repair_minus')..argentretire)
+            ESX.ShowNotification(_U('repair_minus', argentretire))
             TriggerServerEvent("esx_godirtyjob:pay", amount)
             livraisonTotalPaye = 0
         else
@@ -433,7 +433,7 @@ function donnerlapaye()
                 TriggerServerEvent("esx_godirtyjob:pay", amount)
                 livraisonTotalPaye = 0
             else
-                ESX.ShowNotification(_U('repair_minus')..argentretire)
+                ESX.ShowNotification(_U('repair_minus', argentretire))
                 TriggerServerEvent("esx_godirtyjob:pay", amount)
                 livraisonTotalPaye = 0
             end
@@ -446,7 +446,7 @@ function donnerlapaye()
             TriggerServerEvent("esx_godirtyjob:pay", amount)
             livraisonTotalPaye = 0
         else
-            ESX.ShowNotification(_U('repair_minus')..argentretire)
+            ESX.ShowNotification(_U('repair_minus', argentretire))
             TriggerServerEvent("esx_godirtyjob:pay", amount)
             livraisonTotalPaye = 0
         end
@@ -462,11 +462,11 @@ function donnerlapayesanscamion()
 
     if livraisonTotalPaye == 0 then
         ESX.ShowNotification(_U('no_delivery_no_truck'))
-        ESX.ShowNotification(_U('truck_price')..argentretire)
+        ESX.ShowNotification(_U('truck_price', argentretire))
         TriggerServerEvent("esx_godirtyjob:pay", amount)
         livraisonTotalPaye = 0
     elseif amount >= 1 then
-        ESX.ShowNotification(_U('truck_price')..argentretire)
+        ESX.ShowNotification(_U('truck_price', argentretire))
         TriggerServerEvent("esx_godirtyjob:pay", amount)
         livraisonTotalPaye = 0
     else
