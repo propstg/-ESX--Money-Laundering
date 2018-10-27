@@ -26,7 +26,12 @@ end)
 local namezone = "Delivery"
 local namezonenum = 0
 local namezoneregion = 0
-local MissionRegion = 0
+local MissionRegions = {
+    Delivery = 0,
+    LosSantos = 1,
+    BlaineCounty = 2
+}
+local MissionRegion = MissionRegions.Delivery
 local viemaxvehicule = 1000
 local argentretire = 0
 local livraisonTotalPaye = 0
@@ -48,6 +53,7 @@ local CurrentAction           = nil
 local price = 500
 local CurrentActionMsg        = ''
 local CurrentActionData       = {}
+
 --------------------------------------------------------------------------------
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(xPlayer)
@@ -111,7 +117,6 @@ function MenuCloakRoom()
                         end
                         xPlayer.removeAccountMoney('black_money', price)
                         SetPlayerModel(PlayerId(), model)
-                    else
                     end
                 end)
             end
@@ -214,15 +219,15 @@ AddEventHandler('esx_godirtyjob:hasEnteredMarker', function(zone)
                         Blips['delivery'] = nil
                     end
 
-                    CurrentAction     = 'delivery'
-                    CurrentActionMsg  = _U('delivery')
+                    CurrentAction = 'delivery'
+                    CurrentActionMsg = _U('delivery')
                 else
                     CurrentAction = 'hint'
-                    CurrentActionMsg  = _U('not_your_truck')
+                    CurrentActionMsg = _U('not_your_truck')
                 end
             else
                 CurrentAction = 'hint'
-                CurrentActionMsg  = _U('not_your_truck2')
+                CurrentActionMsg = _U('not_your_truck2')
             end
         end
     end
@@ -274,23 +279,22 @@ end)
 
 function nouvelledestination()
     livraisonnombre = livraisonnombre+1
-    livraisonTotalPaye = livraisonTotalPaye+destination.Paye
+    livraisonTotalPaye = livraisonTotalPaye + destination.Paye
 
     if livraisonnombre >= Config.MaxDelivery then
         MissionLivraisonStopRetourDepot()
     else
-
         livraisonsuite = math.random(0, 100)
 
         if livraisonsuite <= 10 then
             MissionLivraisonStopRetourDepot()
         elseif livraisonsuite <= 99 then
             MissionLivraisonSelect()
-        elseif livraisonsuite <= 100 then
-            if MissionRegion == 1 then
-                MissionRegion = 2
-            elseif MissionRegion == 2 then
-                MissionRegion = 1
+        else
+            if MissionRegion == MissionRegions.LosSantos then
+                MissionRegion = MissionRegions.BlaineCounty
+            elseif MissionRegion == MissionRegions.BlaineCounty then
+                MissionRegion = MissionRegions.LosSantos
             end
             MissionLivraisonSelect()
         end
@@ -310,7 +314,7 @@ function retourcamion_oui()
 
     MissionRetourCamion = false
     livraisonnombre = 0
-    MissionRegion = 0
+    MissionRegion = MissionRegions.Delivery
     TriggerServerEvent("esx_godirtyjob:pay", amount)
     print('retourcamion_oui <<< Has been Triggered')
     donnerlapaye()
@@ -341,7 +345,7 @@ function retourcamionperdu_oui()
     print('retourcamionperdu_oui <<< Has been Triggered')
     MissionRetourCamion = false
     livraisonnombre = 0
-    MissionRegion = 0
+    MissionRegion = MissionRegions.Delivery
 
     donnerlapayesanscamion()
 end
@@ -363,7 +367,7 @@ function retourcamionannulermission_oui()
 
     MissionLivraison = false
     livraisonnombre = 0
-    MissionRegion = 0
+    MissionRegion = MissionRegion.First
     TriggerServerEvent("esx_godirtyjob:pay", amount)
     print('retourcamionperdu_non <<< Has been Triggered')
     donnerlapaye()
@@ -386,7 +390,7 @@ function retourcamionperduannulermission_oui()
 
     MissionLivraison = false
     livraisonnombre = 0
-    MissionRegion = 0
+    MissionRegion = MissionRegions.Delivery
     TriggerServerEvent("esx_godirtyjob:pay", amount)
     print('retourcamionperduannulermission_oui <<< Has been Triggered')
     donnerlapayesanscamion()
@@ -415,7 +419,7 @@ function donnerlapaye()
 
     ESX.Game.DeleteVehicle(vehicle)
 
-    local amount = livraisonTotalPaye-argentretire
+    local amount = livraisonTotalPaye - argentretire
 
     if vievehicule >= 1 then
         if livraisonTotalPaye == 0 then
@@ -430,7 +434,7 @@ function donnerlapaye()
                 livraisonTotalPaye = 0
             else
                 ESX.ShowNotification(_U('repair_minus')..argentretire)
-                    TriggerServerEvent("esx_godirtyjob:pay", amount)
+                TriggerServerEvent("esx_godirtyjob:pay", amount)
                 livraisonTotalPaye = 0
             end
         end
@@ -438,15 +442,13 @@ function donnerlapaye()
         if livraisonTotalPaye ~= 0 and amount <= 0 then
             ESX.ShowNotification(_U('truck_state'))
             livraisonTotalPaye = 0
+        elseif argentretire <= 0 then
+            TriggerServerEvent("esx_godirtyjob:pay", amount)
+            livraisonTotalPaye = 0
         else
-            if argentretire <= 0 then
-                    TriggerServerEvent("esx_godirtyjob:pay", amount)
-                livraisonTotalPaye = 0
-            else
-                ESX.ShowNotification(_U('repair_minus')..argentretire)
-                TriggerServerEvent("esx_godirtyjob:pay", amount)
-                livraisonTotalPaye = 0
-            end
+            ESX.ShowNotification(_U('repair_minus')..argentretire)
+            TriggerServerEvent("esx_godirtyjob:pay", amount)
+            livraisonTotalPaye = 0
         end
     end
 end
@@ -463,15 +465,13 @@ function donnerlapayesanscamion()
         ESX.ShowNotification(_U('truck_price')..argentretire)
         TriggerServerEvent("esx_godirtyjob:pay", amount)
         livraisonTotalPaye = 0
+    elseif amount >= 1 then
+        ESX.ShowNotification(_U('truck_price')..argentretire)
+        TriggerServerEvent("esx_godirtyjob:pay", amount)
+        livraisonTotalPaye = 0
     else
-        if amount >= 1 then
-            ESX.ShowNotification(_U('truck_price')..argentretire)
-            TriggerServerEvent("esx_godirtyjob:pay", amount)
-            livraisonTotalPaye = 0
-        else
-            ESX.ShowNotification(_U('truck_state'))
-            livraisonTotalPaye = 0
-        end
+        ESX.ShowNotification(_U('truck_state'))
+        livraisonTotalPaye = 0
     end
 end
 
@@ -496,21 +496,13 @@ Citizen.CreateThread(function()
                                 --        retourcamionannulermission_oui()
                                 --    end
                             --    end 
-                end
-
-                if CurrentAction == 'retourcamion' then
+                elseif CurrentAction == 'retourcamion' then
                     retourcamion_oui()
-                end
-
-                if CurrentAction == 'retourcamionperdu' then
+                elseif CurrentAction == 'retourcamionperdu' then
                     retourcamionperdu_oui()
-                end
-
-                if CurrentAction == 'retourcamionannulermission' then
+                elseif CurrentAction == 'retourcamionannulermission' then
                     retourcamionannulermission_oui()
-                end
-
-                if CurrentAction == 'retourcamionperduannulermission' then
+                elseif CurrentAction == 'retourcamionperduannulermission' then
                     retourcamionperduannulermission_oui()
                 end
 
@@ -535,7 +527,6 @@ Citizen.CreateThread(function()
         local coords = GetEntityCoords(GetPlayerPed(-1))
 
         for k,v in pairs(Config.Zones) do
-
             if isInService and (IsJobTrucker() and v.Type ~= -1 and GetDistanceBetweenCoords(coords, v.Pos.x, v.Pos.y, v.Pos.z, true) < Config.DrawDistance) then
                 DrawMarker(v.Type, v.Pos.x, v.Pos.y, v.Pos.z, 0.0, 0.0, 0.0, 0, 0.0, 0.0, v.Size.x, v.Size.y, v.Size.z, v.Color.r, v.Color.g, v.Color.b, 100, false, true, 2, false, false, false, false)
             end
@@ -617,14 +608,13 @@ function MissionLivraisonSelect()
     local amount = livraisonTotalPaye-argentretire
     TriggerServerEvent('esx:clientLog', "MissionLivraisonSelect num")
     TriggerServerEvent('esx:clientLog', MissionRegion)
-    if MissionRegion == 0 then
+
+    if MissionRegion == MissionRegions.Delivery then
         TriggerServerEvent('esx:clientLog', "MissionLivraisonSelect 1")
         TriggerServerEvent("esx_godirtyjob:pay", amount)
         print('Payout Started')
         MissionRegion = math.random(1,2)
-    end
-
-    if MissionRegion == 1 then -- Los santos
+    elseif MissionRegion == MissionRegions.LosSantos then
         TriggerServerEvent('esx:clientLog', "MissionLivraisonSelect 2")
         TriggerServerEvent("esx_godirtyjob:pay", amount)
         print('Payout Started')
@@ -641,7 +631,7 @@ function MissionLivraisonSelect()
         elseif MissionNum == 9 then destination = Config.Livraison.Delivery9LS namezone = "Delivery9LS" namezonenum = 9 namezoneregion = 1
         elseif MissionNum == 10 then destination = Config.Livraison.Delivery10LS namezone = "Delivery10LS" namezonenum = 10 namezoneregion = 1
         end
-    elseif MissionRegion == 2 then -- Blaine County
+    elseif MissionRegion == MissionRegions.BlaineCounty then
         TriggerServerEvent('esx:clientLog', "MissionLivraisonSelect 3")
         TriggerServerEvent("esx_godirtyjob:pay", amount)
         print('Payout Started')
@@ -685,11 +675,11 @@ function MissionLivraisonLetsGo()
     AddTextComponentString(_U('blip_goal'))
     EndTextCommandSetBlipName(Blips['annulermission'])
 
-    if MissionRegion == 1 then -- Los santos
+    if MissionRegion == MissionRegions.LosSantos then
         ESX.ShowNotification(_U('meet_ls'))
-    elseif MissionRegion == 2 then -- Blaine County
+    elseif MissionRegion == MissionRegions.BlaineCounty then
         ESX.ShowNotification(_U('meet_bc'))
-    elseif MissionRegion == 0 then -- au cas ou
+    elseif MissionRegion == MissionRegions.Delivery then
         ESX.ShowNotification(_U('meet_del'))
     end
 
@@ -713,7 +703,7 @@ function MissionLivraisonStopRetourDepot()
 
     ESX.ShowNotification(_U('return_depot'))
 
-    MissionRegion = 0
+    MissionRegion = MissionRegions.Delivery
     MissionLivraison = false
     MissionNum = 0
     MissionRetourCamion = true
